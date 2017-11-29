@@ -1,0 +1,33 @@
+[submodule "esco-core-scheduler"]
+	path = esco-core-scheduler
+	url = https://github.com/tenforce/esco-core-scheduler
+[submodule "esco-core-solr"]
+	path = esco-core-solr
+	url = https://github.com/tenforce/esco-core-solr
+[submodule "esco-core-delta-based-indexer"]
+	path = esco-core-delta-based-indexer
+	url = https://github.com/tenforce/esco-core-delta-based-indexer
+[submodule "esco-core-hierarchy"]
+	path = esco-core-hierarchy
+	url = https://github.com/tenforce/esco-core-hierarchy
+[submodule "esco-core-kpis"]
+	path = esco-core-kpis
+	url = https://github.com/tenforce/esco-core-kpis
+[submodule "esco-core-cleanup"]
+	path = esco-core-cleanup
+	url = https://github.com/tenforce/esco-core-cleanup
+[submodule "esco-core-validation"]
+	path = esco-core-validation
+	url = https://github.com/tenforce/esco-core-validation
+[submodule "esco-translation-export"]
+	path = esco-translation-export
+	url = https://github.com/tenforce/esco-translation-export
+[submodule "esco-translation-importer"]
+	path = esco-translation-importer
+	url = https://github.com/tenforce/esco-translation-importer
+[submodule "esco-translation-dictionary"]
+	path = esco-translation-dictionary
+	url = https://github.com/tenforce/esco-translation-dictionary
+[submodule "esco-translation-frontend"]
+	path = esco-translation-frontend
+	url = https://github.com/tenforce/esco-translation-frontend

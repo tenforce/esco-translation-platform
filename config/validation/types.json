@@ -1,0 +1,7 @@
+{
+    "types": {
+        "label": "http://www.w3.org/2008/05/skos-xl#Label",
+        "occupation": "http://data.europa.eu/esco/model#Occupation",
+        "skill": "http://data.europa.eu/esco/model#Skill"
+    }
+}

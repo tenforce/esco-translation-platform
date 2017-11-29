@@ -1,0 +1,308 @@
+{
+    "validations": {
+        "hidden1": {
+            "name": "All occurrences of multiple literal forms",
+            "description": "Find all occurrences of multiple literal forms with information about the concept it's in.",
+            "show": [
+                "hidden"
+            ],
+            "types": [
+                "label"
+            ],
+            "parameters": [
+                "uuid", "language", "label", "total", "genders", "literalForms"
+            ],
+            "query": "{ SELECT ?uuid ?language ?label ?type ?total ?genders (GROUP_CONCAT(?literalForm;separator=' <=> ') AS ?literalForms) WHERE { { SELECT DISTINCT ?language ?label ?total (GROUP_CONCAT(?gender;separator=' / ') AS ?genders) WHERE { { SELECT DISTINCT ?language ?label (count(?literalForm) as ?total) WHERE { ?label a <change_the_type> . ?label skosxl:literalForm ?literalForm . bind('changeLanguage' as ?language) FILTER(lang(?literalForm) = ?language) } GROUP BY ?language ?label HAVING( COUNT(?literalForm) > 1 ) ORDER BY DESC(?total) } ?label esco:hasLabelRole ?hasLabelRole. ?hasLabelRole skos:prefLabel ?gender . } GROUP BY ?language ?label ?total } ?label skosxl:literalForm ?literalForm. ?concept ?relation ?label . ?concept mu:uuid ?uuid .  BIND(SUBSTR(str(?relation), 35) AS ?type) }  GROUP BY ?uuid ?language ?label ?type ?total ?genders }",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "multiple-prefterms": {
+            "name": "Multiple prefterms",
+            "description": "Every occupation should have only one preferred term in every language.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation", "skill"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language", "total", "labels"
+            ],
+            "query": "{SELECT ?language ?uuid ?total ?preflabel ?literalForm (GROUP_CONCAT(?literalForm;separator=' <= > ') AS ?labels) { { SELECT ?literalForm ?language ?concept ?uuid  (COUNT(?label) AS ?total) { ?concept a <change_the_type> . ?concept skosxl:prefLabel ?label . ?label skosxl:literalForm ?literalForm . bind('changeLanguage' as ?language)  FILTER(lang(?literalForm) = ?language) ?concept mu:uuid ?uuid . } GROUP BY ?uuid ?language ?literalForm ?concept  HAVING(COUNT(?label) > 1) } ?concept skosxl:prefLabel ?label . ?label skosxl:literalForm ?preflabel . FILTER(lang(?preflabel) = 'en') } GROUP BY ?uuid ?language ?preflabel  ?literalForm ?total ?uuid}",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "multiple-concepts-same-prefterm": {
+            "name": "Multiple concepts with same prefterm",
+            "description": "Preferred terms should be unique in every language.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation", "skill"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language", "literalForm", "duplicateIn"
+            ],
+            "query": "{ SELECT DISTINCT ?uuid ?language ?literalForm  ?preflabel  ?duplicateIn  where { ?concept1 skosxl:prefLabel ?p1 . ?p1 skosxl:literalForm ?literalForm .  ?concept2 skosxl:prefLabel ?p2 . ?p2 skosxl:literalForm ?literalForm . FILTER(STR(?concept1) < STR(?concept2))  FILTER(STRLEN(?literalForm) > 0)  bind('changeLanguage' as ?language) filter(lang(?literalForm) = ?language)  ?concept1 mu:uuid ?uuid . ?concept2 mu:uuid ?uuid2 . ?concept1 a <change_the_type>. ?concept2 a <change_the_type>.  ?concept1 skosxl:prefLabel ?p3 . ?p3 skosxl:literalForm ?preflabel . FILTER(lang(?preflabel) = 'en') ?concept2 skosxl:prefLabel ?p4 . ?p4 skosxl:literalForm ?duplicateIn . FILTER(lang(?duplicateIn) = 'en')  } }",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "multiple-standard-male": {
+            "name": "Multiple standard males",
+            "description": "Every occupation should have only one standard male (preferred or non-preferred) term in every language. This query is not accurate when there are multiple literal forms for one term.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language"
+            ],
+            "query": "{ SELECT ?uuid ?language ?preflabel (COUNT(?term) as ?count) where { ?concept a <change_the_type>. ?concept mu:uuid ?uuid . ?concept skosxl:prefLabel ?p . ?p skosxl:literalForm ?preflabel . FILTER(lang(?preflabel) = 'en') ?concept (skosxl:prefLabel | skosxl:altLabel) ?term . ?term skosxl:literalForm ?label. ?term a skosxl:Label . ?term esco:hasLabelRole <http://data.europa.eu/esco/label-role/standard-male> . BIND(lang(?label) as ?language) FILTER(?language = 'changeLanguage') } GROUP BY ?uuid ?language ?preflabel HAVING(COUNT(?term) > 1) }",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "multiple-standard-female": {
+            "name": "Multiple standard females",
+            "description": "Every occupation should have only one standard female (preferred or non-preferred) term in every language. This query is not accurate when there are multiple literal forms for one term.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language"
+            ],
+            "query": "{ SELECT ?uuid ?language ?preflabel (COUNT(?term) as ?count) where { ?concept a <change_the_type>. ?concept mu:uuid ?uuid . ?concept skosxl:prefLabel ?p . ?p skosxl:literalForm ?preflabel . FILTER(lang(?preflabel) = 'en') ?concept (skosxl:prefLabel | skosxl:altLabel) ?term . ?term skosxl:literalForm ?label. ?term a skosxl:Label . ?term esco:hasLabelRole <http://data.europa.eu/esco/label-role/standard-female> . BIND(lang(?label) as ?language) FILTER(?language = 'changeLanguage') } GROUP BY ?uuid ?language ?preflabel HAVING(COUNT(?term) > 1) }",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "multiple-literalforms": {
+            "name": "Multiple terms with same label",
+            "description": "Literal form of a pref term is reused in the alt terms or hidden terms of a different concept (allowed but needs manual check). This query takes about 30 minutes to run.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation", "skill"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language", "literalForm", "duplicateIn", "duplicateType"
+            ],
+            "query": "{  SELECT ?language ?uuid ?preflabel ?literalForm ?duplicateIn ?duplicateType WHERE { { SELECT (?concept as ?subconcept) (?uuid as ?subuuid) ?literalForm ?language ?duplicateType (?preflabel as ?duplicateIn) WHERE { ?concept a <change_the_type>. ?concept mu:uuid ?uuid . ?concept (skosxl:altLabel | skosxl:hiddenLabel) ?term . ?concept ?relation ?term . BIND(IF(?relation = <http://www.w3.org/2008/05/skos-xl#altLabel>, 'Non-preferred term', 'Hidden term') as ?duplicateType) ?term skosxl:literalForm ?literalForm . BIND(lang(?literalForm) as ?language) FILTER(?language = 'changeLanguage') FILTER(strlen(?literalForm) > 1)  ?concept skosxl:prefLabel / skosxl:literalForm ?preflabel . FILTER((lang(?preflabel)) = 'en') } } ?concept a <change_the_type>. FILTER (?concept != ?subconcept) ?concept mu:uuid ?uuid . ?concept skosxl:prefLabel / skosxl:literalForm ?literalForm . ?concept skosxl:prefLabel ?p . ?p skosxl:literalForm ?preflabel . FILTER((lang(?preflabel)) = 'en') } }",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "missing-prefterm": {
+            "name": "Missing prefterms",
+            "description": "Every occupation should have a preferred term in every language.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation", "skill"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language"
+            ],
+            "query": "?concept mu:uuid ?uuid ; a <change_the_type> ; skosxl:prefLabel ?p1 . ?p1 skosxl:literalForm ?preflabel . filter(lang(?preflabel) = 'en') bind('changeLanguage' as ?language) FILTER NOT EXISTS { ?concept skosxl:prefLabel ?p2 . ?p2 skosxl:literalForm ?label . FILTER(lang(?label) = ?language)  }",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "terms-without-label": {
+            "name": "Missing term labels",
+            "description": "Every term should have a label.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation", "skill"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language"
+            ],
+            "query": "?concept a <change_the_type>; mu:uuid ?uuid; ?hasLabel ?term;  skosxl:prefLabel ?p . ?p skosxl:literalForm ?preflabel.  filter(lang(?preflabel) = 'en') ?term a skosxl:Label; skosxl:literalForm ?literalForm. filter (strlen(?literalForm) = 0) bind('changeLanguage' as ?language) FILTER(lang(?literalForm) = ?language) ",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "missing-label-genders-pt": {
+            "name": "Missing PT genders",
+            "description": "Every preferred term should have at least one gender.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language", "literalForm"
+            ],
+            "query": "?concept a <change_the_type>. ?concept skosxl:prefLabel ?term.   ?term a skosxl:Label;  skosxl:literalForm ?literalForm.  bind('changeLanguage' as ?language) FILTER(lang(?literalForm) = ?language) FILTER NOT EXISTS { ?term esco:hasLabelRole ?gender . } ?concept mu:uuid ?uuid;  skosxl:prefLabel / skosxl:literalForm ?preflabel.  FILTER(LANG(?preflabel) = 'en')",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "missing-label-genders-npt": {
+            "name": "Missing NPT genders",
+            "description": "Every non-preferred term should have at least one gender.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language", "literalForm"
+            ],
+            "query": "?concept a <change_the_type>. ?concept skosxl:altLabel ?term.   ?term a skosxl:Label;  skosxl:literalForm ?literalForm.  bind('changeLanguage' as ?language) FILTER(lang(?literalForm) = ?language) FILTER NOT EXISTS { ?term esco:hasLabelRole ?gender . } ?concept mu:uuid ?uuid;  skosxl:prefLabel ?p . ?p skosxl:literalForm ?preflabel.  FILTER(LANG(?preflabel) = 'en')",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "missing-standard-female": {
+            "name": "Missing standard female",
+            "description": "Every occupation should have one standard female term in every language. This query takes about 20 minutes to run.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language", "genders"
+            ],
+            "query": "{SELECT ?language ?uuid ?preflabel ?genders WHERE { { SELECT ?language ?concept (GROUP_CONCAT(DISTINCT(?gender);separator=' / ') AS ?genders) { ?concept a <change_the_type>. bind('changeLanguage' as ?language)   ?concept (skosxl:prefLabel | skosxl:altLabel) ?term.  ?term a skosxl:Label;  skosxl:literalForm ?literalForm.  FILTER(LANG(?literalForm) = ?language)   ?term esco:hasLabelRole ?p1 . ?p1 skos:prefLabel ?gender . } GROUP BY ?language ?concept ORDER BY ?language ?concept } FILTER(!CONTAINS(?genders, 'standard female')) ?concept mu:uuid ?uuid;  skosxl:prefLabel ?p2 . ?p2 skosxl:literalForm ?preflabel.  FILTER(LANG(?preflabel) = 'en') }}",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "missing-standard-male": {
+            "name": "Missing standard male",
+            "description": "Every occupation should have one standard male term in every language.  This query takes about 20 minutes to run.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language", "genders"
+            ],
+            "query": "{SELECT ?language ?uuid ?preflabel ?genders WHERE { { SELECT ?language ?concept (GROUP_CONCAT(DISTINCT(?gender);separator=' / ') AS ?genders) { ?concept a <change_the_type>. bind('changeLanguage' as ?language)   ?concept (skosxl:prefLabel | skosxl:altLabel) ?term.  ?term a skosxl:Label;  skosxl:literalForm ?literalForm.  FILTER(LANG(?literalForm) = ?language)   ?term esco:hasLabelRole ?p1 . ?p1 skos:prefLabel ?gender . } GROUP BY ?language ?concept ORDER BY ?language ?concept } FILTER(!CONTAINS(?genders, 'standard male')) ?concept mu:uuid ?uuid;  skosxl:prefLabel ?p2 . ?p2 skosxl:literalForm ?preflabel.  FILTER(LANG(?preflabel) = 'en') }}",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "missing-male": {
+            "name": "Missing male with standard male",
+            "description": "Concepts with terms that are standard male without male.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language", "literalForm"
+            ],
+            "query": "?concept a <change_the_type>; mu:uuid ?uuid;  skosxl:prefLabel ?p . ?p skosxl:literalForm ?preflabel.  FILTER(LANG(?preflabel) = 'en') ?concept (skosxl:prefLabel | skosxl:altLabel) ?term . ?term a skosxl:Label ;  skosxl:literalForm ?literalForm.   bind('changeLanguage' as ?language) FILTER(LANG(?literalForm) = ?language) FILTER EXISTS { ?term esco:hasLabelRole <http://data.europa.eu/esco/label-role/standard-male> .  } FILTER NOT EXISTS { ?term esco:hasLabelRole <http://data.europa.eu/esco/label-role/male> .  } ",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "missing-female": {
+            "name": "Missing female with standard female",
+            "description": "Concepts with terms that are standard female without female.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language", "literalForm"
+            ],
+            "query": "?concept a <change_the_type>; mu:uuid ?uuid;  skosxl:prefLabel ?p . ?p skosxl:literalForm ?preflabel.  FILTER(LANG(?preflabel) = 'en') ?concept (skosxl:prefLabel | skosxl:altLabel) ?term . ?term a skosxl:Label ;  skosxl:literalForm ?literalForm.   bind('changeLanguage' as ?language) FILTER(LANG(?literalForm) = ?language) FILTER EXISTS { ?term esco:hasLabelRole <http://data.europa.eu/esco/label-role/standard-female> .  } FILTER NOT EXISTS { ?term esco:hasLabelRole <http://data.europa.eu/esco/label-role/female> .  } ",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "missing-preflabel-neutral": {
+            "name": "Missing prefterm neutral gender",
+            "description": "Every preferred term should have the neutral gender.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language", "literalForm", "genders"
+            ],
+            "query": "{ SELECT ?uuid ?language ?preflabel ?literalForm (GROUP_CONCAT(?genders;separator=' / ') AS ?genders) WHERE { ?concept a <change_the_type>. ?concept skosxl:prefLabel ?term . ?term a skosxl:Label . ?term skosxl:literalForm ?literalForm.  FILTER(lang(?literalForm) = ?language) bind('changeLanguage' as ?language) FILTER(STRLEN(?literalForm) > 0) OPTIONAL { ?term esco:hasLabelRole ?p1 . ?p1 skos:prefLabel ?genders . } FILTER NOT EXISTS { ?term esco:hasLabelRole <http://data.europa.eu/esco/label-role/neutral> .  }  ?concept mu:uuid ?uuid .  ?concept skosxl:prefLabel ?p2 . ?p2 skosxl:literalForm?preflabel .  FILTER(lang(?preflabel) = 'en')  } GROUP BY ?language ?uuid ?literalForm ?preflabel }",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        },
+        "missing-task": {
+            "name": "Missing tasks",
+            "description": "Every occupation should have a task in every language.",
+            "show": [
+                "translation"
+            ],
+            "types": [
+                "occupation", "skill"
+            ],
+            "parameters": [
+                "uuid", "preflabel", "language"
+            ],
+            "query": "?concept a <change_the_type>; mu:uuid ?uuid; skosxl:prefLabel ?p . ?p skosxl:literalForm ?preflabel. filter(lang(?preflabel) = 'en') bind('changeLanguage' as ?language) filter not exists { ?task a translationvocab:Task ; translationvocab:language ?taskLanguage; ?hasConcept ?concept. filter(?taskLanguage = ?language)}",
+            "template": {
+                "string": "changeLanguage",
+                "parameter": "template",
+                "query": "select ?template where {<http://mu.semte.ch/application> <http://translation.escoportal.eu/supportedLanguage> ?template . filter(?template != 'en')}"
+            }
+        }
+    }
+}
