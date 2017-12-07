@@ -3,15 +3,10 @@
 #       file docker-compose.override.yml instead.
 version: "2"
 services:
-  frontend-dist:
-    build: ./esco-translation-frontend
-    volumes:
-      - ./esco-translation-frontend:/app
   frontend:
     restart: always
-    image: semtech/mu-nginx-spa-proxy
+    build: ./esco-translation-frontend
     volumes:
-      - ./esco-translation-frontend/dist:/app
       - ./config/nginx:/etc/nginx/conf.d/
     links:
       - identifier:backend
